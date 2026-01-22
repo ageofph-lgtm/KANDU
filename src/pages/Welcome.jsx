@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Download, ArrowRight, Smartphone, Zap, Shield, Users, Check } from "lucide-react";
+import { Download, ArrowRight, Smartphone, Loader2 } from "lucide-react";
 import { createPageUrl } from "@/utils";
 import { motion } from "framer-motion";
 
@@ -9,11 +9,12 @@ export default function Welcome() {
   const navigate = useNavigate();
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isInstallable, setIsInstallable] = useState(false);
-  const [isInstalled, setIsInstalled] = useState(false);
+  const [isInstalling, setIsInstalling] = useState(false);
 
   useEffect(() => {
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      setIsInstalled(true);
+    // Verifica se já está instalado como PWA
+    if (window.matchMedia('(display-mode: standalone)').matches || 
+        window.navigator.standalone === true) {
       navigate(createPageUrl("Dashboard"));
       return;
     }
@@ -24,31 +25,53 @@ export default function Welcome() {
       setIsInstallable(true);
     };
 
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-    window.addEventListener('appinstalled', () => {
-      setIsInstalled(true);
+    const handleAppInstalled = () => {
       setDeferredPrompt(null);
       setIsInstallable(false);
-    });
+      setIsInstalling(false);
+      // Redireciona imediatamente após instalação
+      setTimeout(() => navigate(createPageUrl("Dashboard")), 500);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
     };
   }, [navigate]);
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) {
-      alert("Para instalar, use o menu do navegador e selecione 'Adicionar à tela inicial' ou 'Instalar aplicativo'.");
+      // Instruções específicas por navegador
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const isAndroid = /Android/.test(navigator.userAgent);
+      
+      if (isIOS) {
+        alert("No Safari, toque no botão de partilha (⬆️) e selecione 'Adicionar ao Ecrã Principal'.");
+      } else if (isAndroid) {
+        alert("No menu do navegador (⋮), selecione 'Instalar aplicação' ou 'Adicionar ao ecrã inicial'.");
+      } else {
+        alert("No menu do navegador, selecione 'Instalar aplicação' ou 'Adicionar à tela inicial'.");
+      }
       return;
     }
 
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
+    setIsInstalling(true);
     
-    if (outcome === 'accepted') {
-      setDeferredPrompt(null);
-      setIsInstallable(false);
+    try {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      
+      if (outcome === 'accepted') {
+        setDeferredPrompt(null);
+        setIsInstallable(false);
+      }
+    } catch (error) {
+      console.error("Erro na instalação:", error);
+    } finally {
+      setIsInstalling(false);
     }
   };
 
