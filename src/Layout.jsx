@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { User as UserEntity } from "@/entities/User";
@@ -191,34 +190,76 @@ export default function Layout({ children }) {
       </div>
 
       {/* --- Barra de Navegação Inferior (Mobile) --- */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t p-2 md:hidden grid grid-cols-6 gap-1 z-50 shadow-t">
-        {navItems.map((item) => {
-          const isActive = location.pathname === item.url;
-          return (
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 md:hidden z-50 px-4 pb-4 pt-2">
+        <div className="flex justify-around items-end max-w-md mx-auto">
+          {/* Início */}
+          <Link
+            to={createPageUrl("Dashboard")}
+            className={`flex flex-col items-center justify-center transition-colors ${
+              location.pathname === createPageUrl("Dashboard") ? 'text-[#F26522]' : 'text-gray-400'
+            }`}
+          >
+            <MapPin className="w-6 h-6" />
+            <span className="text-xs mt-1 font-medium">Início</span>
+          </Link>
+
+          {/* Buscar */}
+          <Link
+            to={createPageUrl("Applications")}
+            className={`flex flex-col items-center justify-center transition-colors relative ${
+              location.pathname === createPageUrl("Applications") ? 'text-[#F26522]' : 'text-gray-400'
+            }`}
+          >
+            <div className="relative">
+              <FileText className="w-6 h-6" />
+              {unreadNotifications.applications > 0 && (
+                <Badge className="absolute -top-1 -right-2 h-4 w-4 p-0 flex items-center justify-center text-xs bg-red-500">
+                  {unreadNotifications.applications > 9 ? '9+' : unreadNotifications.applications}
+                </Badge>
+              )}
+            </div>
+            <span className="text-xs mt-1 font-medium">Candidaturas</span>
+          </Link>
+
+          {/* Botão Central + (Losango) */}
+          <div className="relative -top-4">
             <Link
-              key={`mobile-${item.title}`}
-              to={item.url}
-              className={`flex flex-col items-center justify-center w-full h-14 rounded-lg transition-colors ${
-                isActive ? 'text-blue-600 bg-blue-50' : 'text-gray-500'
-              }`}
+              to={createPageUrl("NewJob")}
+              className="w-14 h-14 bg-[#F26522] text-white flex items-center justify-center shadow-lg shadow-[#F26522]/30 rotate-45 rounded-xl"
             >
-              <div className="relative">
-                <item.icon className="w-6 h-6" />
-                {item.title === 'chat' && unreadNotifications.chat > 0 && (
-                  <Badge className="absolute -top-1 -right-2 h-4 w-4 p-0 flex items-center justify-center text-xs bg-red-500">
-                    {unreadNotifications.chat > 9 ? '9+' : unreadNotifications.chat}
-                  </Badge>
-                )}
-                {item.title === 'applications' && unreadNotifications.applications > 0 && (
-                  <Badge className="absolute -top-1 -right-2 h-4 w-4 p-0 flex items-center justify-center text-xs bg-blue-500">
-                    {unreadNotifications.applications > 9 ? '9+' : unreadNotifications.applications}
-                  </Badge>
-                )}
-              </div>
-              <span className="text-xs mt-1">{item.title === 'admin' ? 'Admin' : t(item.title)}</span>
+              <span className="-rotate-45 text-3xl font-light">+</span>
             </Link>
-          );
-        })}
+          </div>
+
+          {/* Chat */}
+          <Link
+            to={createPageUrl("Chat")}
+            className={`flex flex-col items-center justify-center transition-colors relative ${
+              location.pathname === createPageUrl("Chat") ? 'text-[#F26522]' : 'text-gray-400'
+            }`}
+          >
+            <div className="relative">
+              <MessageCircle className="w-6 h-6" />
+              {unreadNotifications.chat > 0 && (
+                <Badge className="absolute -top-1 -right-2 h-4 w-4 p-0 flex items-center justify-center text-xs bg-red-500">
+                  {unreadNotifications.chat > 9 ? '9+' : unreadNotifications.chat}
+                </Badge>
+              )}
+            </div>
+            <span className="text-xs mt-1 font-medium">Chat</span>
+          </Link>
+
+          {/* Perfil */}
+          <Link
+            to={createPageUrl("Profile")}
+            className={`flex flex-col items-center justify-center transition-colors ${
+              location.pathname === createPageUrl("Profile") ? 'text-[#F26522]' : 'text-gray-400'
+            }`}
+          >
+            <User className="w-6 h-6" />
+            <span className="text-xs mt-1 font-medium">Perfil</span>
+          </Link>
+        </div>
       </nav>
     </div>
   );
