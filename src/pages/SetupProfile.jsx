@@ -2,64 +2,21 @@ import React, { useState, useEffect } from "react";
 import { User } from "@/entities/User";
 import { Button } from "@/components/ui/button";
 import { 
-  Briefcase, 
-  Hammer,
-  Star,
-  Calendar,
+  ArrowLeft,
+  MoreVertical,
   MessageSquare,
-  ShoppingBag,
-  BarChart3,
-  Bell,
-  ArrowRight,
-  RefreshCw,
-  Shield,
-  Loader2
+  Bookmark,
+  Star,
+  Check,
+  Loader2,
+  Home,
+  Search,
+  Plus,
+  User as UserIcon
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { translations } from "../components/utils/translations";
-
-// Hexagon component
-const Hexagon = ({ children, active, color = "gray", onClick, label }) => {
-  const colorClasses = {
-    gray: "bg-white dark:bg-[#2d241b] border-gray-200 dark:border-[#3a2e24]",
-    orange: "bg-[#ec7f13] border-[#ec7f13] shadow-lg shadow-[#ec7f13]/30",
-    yellow: "bg-[#ec7f13] border-[#ec7f13]",
-    blue: "bg-blue-500 border-blue-500",
-    purple: "bg-purple-500 border-purple-500",
-    green: "bg-green-500 border-green-500",
-    red: "bg-red-500 border-red-500",
-  };
-
-  return (
-    <button 
-      onClick={onClick}
-      className="flex flex-col items-center gap-2 group focus:outline-none transition-transform active:scale-95"
-    >
-      <div className="relative w-24 h-28">
-        {/* Border/glow layer */}
-        <div 
-          className={`absolute inset-0 ${active ? 'bg-[#ec7f13]/50 blur-[2px]' : 'bg-gray-300 dark:bg-[#3a2e24]'}`}
-          style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }}
-        />
-        {/* Main hexagon */}
-        <div 
-          className={`absolute inset-[2px] flex items-center justify-center transition-all
-            ${active ? 'bg-[#ec7f13] shadow-lg shadow-[#ec7f13]/30' : 'bg-white dark:bg-[#2d241b] group-hover:bg-gray-50 dark:group-hover:bg-[#3a2e24]'}
-          `}
-          style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }}
-        >
-          <div className={active ? 'text-white' : 'text-gray-500 dark:text-gray-400'}>
-            {children}
-          </div>
-        </div>
-      </div>
-      <span className={`text-xs font-medium text-center leading-tight ${active ? 'text-[#ec7f13] font-bold' : 'text-gray-600 dark:text-gray-400'}`}>
-        {label}
-      </span>
-    </button>
-  );
-};
 
 export default function SetupProfile() {
   const navigate = useNavigate();
@@ -95,7 +52,6 @@ export default function SetupProfile() {
     const timer = setTimeout(() => {
       checkUser();
     }, 500);
-    
     return () => clearTimeout(timer);
   }, [checkUser]);
 
@@ -109,7 +65,6 @@ export default function SetupProfile() {
       try {
         await User.loginWithRedirect(window.location.href);
       } catch (error) {
-        console.error("Login error:", error);
         window.location.href = '/auth/login?redirect=' + encodeURIComponent(window.location.href);
       }
       return;
@@ -121,10 +76,8 @@ export default function SetupProfile() {
         user_type: selectedType,
         language: selectedLanguage 
       });
-      
       navigate(createPageUrl("Dashboard"));
     } catch (error) {
-      console.error("Error creating profile:", error);
       alert(t('errorCreatingProfile') || "Erro ao criar perfil. Tente novamente.");
     }
     setIsCreating(false);
@@ -134,278 +87,243 @@ export default function SetupProfile() {
     try {
       await User.loginWithRedirect(window.location.href);
     } catch (error) {
-      console.error("Login error:", error);
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      setTimeout(() => window.location.reload(), 1000);
     }
-  };
-
-  const handleForceRefresh = () => {
-    localStorage.clear();
-    sessionStorage.clear();
-    window.location.reload();
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#f8f7f6] dark:bg-[#221910] flex items-center justify-center">
+      <div className="min-h-screen bg-[#f8f7f6] flex items-center justify-center">
         <Loader2 className="w-12 h-12 text-[#ec7f13] animate-spin" />
       </div>
     );
   }
 
+  const specialties = [
+    { icon: "🎨", name: "Pintura" },
+    { icon: "⚡", name: "Elétrica" },
+    { icon: "🔧", name: "Encanamento" },
+    { icon: "🧱", name: "Alvenaria" },
+    { icon: "🏠", name: "Pisos" },
+    { icon: "🏗️", name: "Telhados" },
+  ];
+
+  const portfolioImages = [
+    "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=200&h=200&fit=crop",
+    "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=200&h=200&fit=crop",
+    "https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=200&h=200&fit=crop",
+  ];
+
   return (
-    <div className="min-h-screen bg-[#f8f7f6] dark:bg-[#221910] text-gray-900 dark:text-white">
-      <div className="max-w-md mx-auto min-h-screen flex flex-col">
+    <div className="min-h-screen bg-[#f8f7f6] text-gray-900 pb-24">
+      <div className="max-w-md mx-auto">
         {/* Header */}
-        <header className="px-6 pt-12 pb-4 flex justify-between items-center">
-          <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
-              {user ? t('welcomeBack') || 'Bem-vindo,' : 'Bem-vindo ao'}
-            </p>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              {user ? user.full_name || 'KANDU' : 'KANDU'}
-            </h1>
-          </div>
-          <div className="relative">
-            <button className="w-10 h-10 rounded-full bg-white dark:bg-[#2d241b] shadow-sm flex items-center justify-center text-gray-600 dark:text-gray-300">
-              <Bell className="w-5 h-5" />
-            </button>
-            <span className="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border-2 border-[#f8f7f6] dark:border-[#221910]"></span>
-          </div>
+        <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-100 px-4 py-3 flex justify-between items-center">
+          <button 
+            onClick={() => navigate(-1)}
+            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-700" />
+          </button>
+          <h1 className="text-lg font-bold tracking-tight">Perfil Profissional</h1>
+          <button className="p-2 rounded-full hover:bg-gray-100 transition-colors">
+            <MoreVertical className="w-5 h-5 text-gray-700" />
+          </button>
         </header>
 
-        {/* Search Bar */}
-        <div className="px-6 mb-6">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Encontre profissionais ou serviços..."
-              className="w-full py-3 pl-10 pr-4 bg-white dark:bg-[#2d241b] border-none rounded-xl shadow-sm text-sm focus:ring-2 focus:ring-[#ec7f13] dark:text-white placeholder-gray-400"
-              disabled={!user}
-            />
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+        {/* Profile Card */}
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 mx-4 mt-6 p-6">
+          {/* Hexagon Avatar */}
+          <div className="flex flex-col items-center mb-4">
+            <div className="relative w-32 h-36 mb-4">
+              {/* Glow effect */}
+              <div 
+                className="absolute inset-0 bg-gradient-to-br from-[#ec7f13] to-orange-600 opacity-20 blur-xl"
+                style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }}
+              />
+              {/* Border */}
+              <div 
+                className="absolute inset-0 bg-gradient-to-br from-[#ec7f13] to-orange-600 p-[3px]"
+                style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }}
+              >
+                {/* Image container */}
+                <div 
+                  className="w-full h-full bg-gray-200 overflow-hidden"
+                  style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }}
+                >
+                  <img 
+                    src={user?.avatar_url || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face"}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+              {/* Verified badge */}
+              <div className="absolute bottom-0 right-2 bg-green-500 text-white rounded-full p-1 border-2 border-white shadow-sm">
+                <Check className="w-3 h-3" />
+              </div>
+            </div>
+
+            <h2 className="text-2xl font-bold text-gray-900">
+              {user?.full_name || "Carlos Mendes"}
+            </h2>
+            <p className="text-[#ec7f13] font-semibold text-sm uppercase tracking-wider flex items-center gap-1 mt-1">
+              <Check className="w-4 h-4" /> EMPREITEIRO CERTIFICADO
+            </p>
+          </div>
+
+          {/* Stats */}
+          <div className="flex items-center justify-center gap-6 mb-6">
+            <div className="text-center">
+              <div className="flex items-center justify-center text-yellow-500 font-bold text-lg">
+                <span>4.9</span>
+                <Star className="w-4 h-4 ml-1 fill-yellow-500" />
+              </div>
+              <span className="text-xs text-gray-500">128 Avaliações</span>
+            </div>
+            <div className="h-8 w-px bg-gray-200"></div>
+            <div className="text-center">
+              <div className="font-bold text-lg text-gray-900">98%</div>
+              <span className="text-xs text-gray-500">Taxa de Sucesso</span>
+            </div>
+            <div className="h-8 w-px bg-gray-200"></div>
+            <div className="text-center">
+              <div className="font-bold text-lg text-gray-900">7+</div>
+              <span className="text-xs text-gray-500">Anos Exp.</span>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-3">
+            <Button 
+              onClick={user ? handleCreateProfile : handleLogin}
+              disabled={isCreating}
+              className="flex-1 bg-[#ec7f13] hover:bg-[#d66c0a] text-white font-semibold py-3 px-4 rounded-xl shadow-md shadow-[#ec7f13]/20"
+            >
+              {isCreating ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <>
+                  <MessageSquare className="w-5 h-5 mr-2" />
+                  {user ? "Continuar" : "Login"}
+                </>
+              )}
+            </Button>
+            <button className="bg-gray-100 text-gray-700 p-3 rounded-xl hover:bg-gray-200 transition-colors">
+              <Bookmark className="w-5 h-5" />
+            </button>
           </div>
         </div>
 
-        {!user ? (
-          /* Login Section */
-          <div className="flex-1 flex flex-col items-center justify-center px-6 gap-6">
-            <div className="w-32 h-32 bg-[#ec7f13] rounded-full flex items-center justify-center shadow-lg shadow-[#ec7f13]/30">
-              <Briefcase className="w-16 h-16 text-white" />
-            </div>
-            <div className="text-center">
-              <h2 className="text-xl font-bold mb-2">Conecte-se ao KANDU</h2>
-              <p className="text-gray-500 dark:text-gray-400 text-sm">
-                Para continuar, faça login com a sua conta Google.
-              </p>
-            </div>
-            <Button 
-              onClick={handleLogin} 
-              className="w-full h-14 bg-[#ec7f13] hover:bg-[#d66c0a] text-white text-lg font-semibold rounded-xl shadow-lg shadow-[#ec7f13]/30"
-            >
-              Login com Google
-            </Button>
-            <button 
-              onClick={handleForceRefresh}
-              className="flex items-center gap-2 text-sm text-gray-500 hover:text-[#ec7f13] transition-colors"
-            >
-              <RefreshCw className="w-4 h-4" />
-              Problemas com login?
-            </button>
+        {/* Specialties Section */}
+        <section className="mx-4 mt-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold text-gray-900">Especialidades</h3>
+            <button className="text-sm text-[#ec7f13] font-medium hover:underline">Ver todas</button>
           </div>
-        ) : (
-          <>
-            {/* Logged in indicator */}
-            <div className="px-6 mb-4">
-              <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-sm text-green-700 dark:text-green-400">
-                  Logado como <strong>{user.full_name || user.email}</strong>
-                </span>
-              </div>
-            </div>
-
-            {/* Language Selection */}
-            <div className="px-6 mb-6">
-              <h3 className="text-lg font-bold mb-3">Idioma</h3>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setSelectedLanguage("PT")}
-                  className={`flex-1 py-3 rounded-xl font-medium transition-all ${
-                    selectedLanguage === "PT" 
-                      ? "bg-[#ec7f13] text-white shadow-lg shadow-[#ec7f13]/30" 
-                      : "bg-white dark:bg-[#2d241b] text-gray-700 dark:text-gray-300"
+          <div className="flex flex-wrap gap-2">
+            {specialties.map((spec, idx) => (
+              <button
+                key={idx}
+                onClick={() => setSelectedType(spec.name.toLowerCase())}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all
+                  ${selectedType === spec.name.toLowerCase() 
+                    ? 'bg-[#ec7f13] text-white shadow-md' 
+                    : 'bg-white text-gray-700 border border-gray-200 hover:border-[#ec7f13] hover:text-[#ec7f13]'
                   }`}
-                >
-                  🇵🇹 Português
-                </button>
-                <button
-                  onClick={() => setSelectedLanguage("EN")}
-                  className={`flex-1 py-3 rounded-xl font-medium transition-all ${
-                    selectedLanguage === "EN" 
-                      ? "bg-[#ec7f13] text-white shadow-lg shadow-[#ec7f13]/30" 
-                      : "bg-white dark:bg-[#2d241b] text-gray-700 dark:text-gray-300"
-                  }`}
-                >
-                  🇬🇧 English
-                </button>
-              </div>
-            </div>
-
-            {/* Profile Type Selection - Honeycomb Style */}
-            <div className="px-6 mb-6">
-              <h3 className="text-lg font-bold mb-4">Selecione o seu perfil</h3>
-              
-              <div className="flex flex-col items-center gap-1">
-                {/* First row - 2 hexagons */}
-                <div className="flex gap-4 mb-[-20px]">
-                  <Hexagon 
-                    active={selectedType === "worker"} 
-                    onClick={() => setSelectedType("worker")}
-                    label="Profissional"
-                  >
-                    <Hammer className="w-8 h-8" />
-                  </Hexagon>
-                  <Hexagon 
-                    active={selectedType === "employer"} 
-                    onClick={() => setSelectedType("employer")}
-                    label="Empregador"
-                  >
-                    <Briefcase className="w-8 h-8" />
-                  </Hexagon>
-                </div>
-                
-                {/* Second row - 2 hexagons offset */}
-                <div className="flex gap-4 mb-[-20px]">
-                  <Hexagon 
-                    active={selectedType === "admin"} 
-                    onClick={() => setSelectedType("admin")}
-                    label="Administrador"
-                  >
-                    <Shield className="w-8 h-8" />
-                  </Hexagon>
-                  <Hexagon 
-                    active={false} 
-                    onClick={() => {}}
-                    label="Em breve"
-                  >
-                    <Star className="w-8 h-8" />
-                  </Hexagon>
-                </div>
-              </div>
-
-              {/* Selected type description */}
-              {selectedType && (
-                <div className="mt-8 p-4 bg-white dark:bg-[#2d241b] rounded-xl border border-gray-200 dark:border-[#3a2e24]">
-                  <h4 className="font-semibold text-[#ec7f13] mb-1">
-                    {selectedType === "worker" && "Profissional"}
-                    {selectedType === "employer" && "Empregador"}
-                    {selectedType === "admin" && "Administrador"}
-                  </h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {selectedType === "worker" && "Encontre trabalhos na área da construção e faça propostas para projetos."}
-                    {selectedType === "employer" && "Publique projetos e encontre os melhores profissionais para o seu trabalho."}
-                    {selectedType === "admin" && "Gestão completa da plataforma, supervisão e moderação de utilizadores."}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Recent Updates Section */}
-            <div className="px-6 mb-6 flex-1">
-              <h3 className="text-lg font-bold mb-3">Atualizações Recentes</h3>
-              <div className="space-y-3">
-                <div className="flex gap-3 p-3 bg-white dark:bg-[#2d241b] rounded-xl">
-                  <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-200 dark:bg-[#3a2e24] flex-shrink-0">
-                    <div 
-                      className="w-full h-full"
-                      style={{ 
-                        clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
-                        background: 'linear-gradient(135deg, #ec7f13, #fbbf24)'
-                      }}
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-sm">Novos Projetos</h4>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                      Descubra oportunidades na sua área
-                    </p>
-                    <span className="text-xs text-[#ec7f13]">Novo</span>
-                  </div>
-                </div>
-
-                <div className="flex gap-3 p-3 bg-white dark:bg-[#2d241b] rounded-xl">
-                  <div className="w-12 h-12 rounded-lg overflow-hidden bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
-                    <Star className="w-6 h-6 text-blue-500" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-sm">Sistema de Avaliações</h4>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                      Construa a sua reputação
-                    </p>
-                    <span className="text-xs text-gray-400">Em breve</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Continue Button */}
-            <div className="px-6 pb-8">
-              <Button 
-                onClick={handleCreateProfile}
-                disabled={!selectedType || isCreating}
-                className="w-full h-14 bg-[#ec7f13] hover:bg-[#d66c0a] disabled:bg-gray-300 dark:disabled:bg-[#3a2e24] text-white text-lg font-semibold rounded-xl shadow-lg shadow-[#ec7f13]/30 disabled:shadow-none transition-all"
               >
-                {isCreating ? (
-                  <Loader2 className="w-6 h-6 animate-spin" />
-                ) : (
-                  <>
-                    Continuar
-                    <ArrowRight className="w-5 h-5 ml-2" />
-                  </>
-                )}
-              </Button>
-            </div>
-          </>
-        )}
-
-        {/* Bottom Navigation Preview */}
-        <nav className="sticky bottom-0 bg-white dark:bg-[#2d241b] border-t border-gray-200 dark:border-[#3a2e24] px-6 py-3">
-          <div className="flex justify-around items-center">
-            <button className="flex flex-col items-center gap-1 text-[#ec7f13]">
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
-              </svg>
-              <span className="text-xs font-medium">Início</span>
-            </button>
-            <button className="flex flex-col items-center gap-1 text-gray-400">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <span className="text-xs">Buscar</span>
-            </button>
-            <button className="w-14 h-14 -mt-6 bg-[#ec7f13] rounded-full flex items-center justify-center text-white shadow-lg shadow-[#ec7f13]/30">
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-            </button>
-            <button className="flex flex-col items-center gap-1 text-gray-400">
-              <MessageSquare className="w-6 h-6" />
-              <span className="text-xs">Chat</span>
-            </button>
-            <button className="flex flex-col items-center gap-1 text-gray-400">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              <span className="text-xs">Perfil</span>
-            </button>
+                <span>{spec.icon}</span>
+                {spec.name}
+              </button>
+            ))}
           </div>
-        </nav>
+        </section>
+
+        {/* About Section */}
+        <section className="mx-4 mt-6">
+          <h3 className="text-lg font-bold text-gray-900 mb-3">Sobre</h3>
+          <p className="text-gray-600 text-sm leading-relaxed">
+            Profissional dedicado com vasta experiência em reformas residenciais e comerciais. 
+            Foco na qualidade do acabamento e cumprimento rigoroso de prazos. 
+            Especialista em resolver problemas complexos de elétrica e hidráulica.
+          </p>
+        </section>
+
+        {/* Portfolio Section */}
+        <section className="mx-4 mt-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold text-gray-900">Portfólio Recente</h3>
+            <span className="text-sm text-[#ec7f13] font-medium">24 Projetos</span>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {portfolioImages.map((img, idx) => (
+              <div 
+                key={idx}
+                className="relative aspect-square overflow-hidden"
+                style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }}
+              >
+                <img 
+                  src={img}
+                  alt={`Portfolio ${idx + 1}`}
+                  className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
+                />
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Reviews Section */}
+        <section className="mx-4 mt-6 mb-8">
+          <h3 className="text-lg font-bold text-gray-900 mb-4">Avaliações</h3>
+          <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                <span className="text-blue-600 font-bold text-sm">AS</span>
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-semibold text-gray-900">Ana Souza</h4>
+                  <div className="flex items-center gap-0.5">
+                    {[1,2,3,4,5].map(i => (
+                      <Star key={i} className="w-3 h-3 fill-yellow-500 text-yellow-500" />
+                    ))}
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mb-2">Há 2 dias</p>
+                <p className="text-sm text-gray-600">
+                  "O Carlos fez um trabalho excelente na pintura do meu apartamento. 
+                  Muito cuidadoso com a mobília e o acabamento ficou perfeito. Recomendo!"
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
+
+      {/* Bottom Navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-3 z-50">
+        <div className="max-w-md mx-auto flex justify-around items-center">
+          <button className="flex flex-col items-center gap-1 text-gray-400">
+            <Home className="w-6 h-6" />
+            <span className="text-xs">Início</span>
+          </button>
+          <button className="flex flex-col items-center gap-1 text-gray-400">
+            <Search className="w-6 h-6" />
+            <span className="text-xs">Buscar</span>
+          </button>
+          <button className="w-14 h-14 -mt-6 bg-[#ec7f13] rounded-full flex items-center justify-center text-white shadow-lg shadow-[#ec7f13]/30">
+            <Plus className="w-8 h-8" />
+          </button>
+          <button className="flex flex-col items-center gap-1 text-gray-400">
+            <MessageSquare className="w-6 h-6" />
+            <span className="text-xs">Chat</span>
+          </button>
+          <button className="flex flex-col items-center gap-1 text-[#ec7f13]">
+            <UserIcon className="w-6 h-6" />
+            <span className="text-xs font-medium">Perfil</span>
+          </button>
+        </div>
+      </nav>
     </div>
   );
 }
