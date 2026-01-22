@@ -163,7 +163,7 @@ export default function Profile() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#1E293B] pb-4">
+    <div className="min-h-screen bg-[#F8FAFC] text-[#1E293B] pb-20 md:pb-4">
       <input
         type="file"
         ref={avatarInputRef}
