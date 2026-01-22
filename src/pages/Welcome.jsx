@@ -136,10 +136,20 @@ export default function Welcome() {
           {/* Botão de Instalação */}
           <Button
             onClick={handleInstallClick}
-            className="w-full h-14 bg-[#F26522] hover:bg-orange-600 text-white text-lg font-semibold rounded-xl shadow-lg shadow-[#F26522]/30 flex items-center justify-center gap-3"
+            disabled={isInstalling}
+            className="w-full h-14 bg-[#F26522] hover:bg-orange-600 text-white text-lg font-semibold rounded-xl shadow-lg shadow-[#F26522]/30 flex items-center justify-center gap-3 disabled:opacity-70"
           >
-            <Download className="w-5 h-5" />
-            {isInstallable ? "Instalar Aplicativo" : "Instalar App"}
+            {isInstalling ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                A instalar...
+              </>
+            ) : (
+              <>
+                <Download className="w-5 h-5" />
+                {isInstallable ? "Instalar Aplicativo" : "Instalar App"}
+              </>
+            )}
           </Button>
 
           {/* Botão de continuar sem instalar */}
