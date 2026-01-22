@@ -1,60 +1,78 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { Job } from "@/entities/Job";
 import { User } from "@/entities/User";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, ChevronLeft, ChevronRight, Clock, MapPin, MoreVertical } from "lucide-react";
-import { format, startOfMonth, endOfMonth, isSameDay, parseISO, addMonths, subMonths, eachDayOfInterval, isSameMonth, getDay } from "date-fns";
+import { 
+  Calendar as CalendarIcon, 
+  Clock,
+  MapPin,
+  Euro,
+  Plus,
+  ChevronLeft,
+  ChevronRight,
+  Filter
+} from "lucide-react";
+import { format, addDays, startOfWeek, isSameDay, parseISO, addWeeks, subWeeks } from "date-fns";
 import { pt } from "date-fns/locale";
-import { useNavigate } from "react-router-dom";
 
 export default function Calendar() {
-  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [jobs, setJobs] = useState([]);
-  const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [loading, setLoading] = useState(true);
+  const [currentWeek, setCurrentWeek] = useState(new Date());
+  const [view, setView] = useState("week");
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
+  const loadUser = useCallback(async () => {
     try {
       const userData = await User.me();
       setUser(userData);
-      
-      let jobList = [];
-      if (userData.user_type === "admin") {
-        jobList = await Job.list();
-      } else if (userData.user_type === "employer") {
-        jobList = await Job.filter({ employer_id: userData.id });
-      } else if (userData.user_type === "worker") {
-        jobList = await Job.filter({ worker_id: userData.id });
-      }
-      
-      setJobs(jobList.filter(job => job.start_date));
     } catch (error) {
-      console.error("Error loading data:", error);
+      console.log("User not authenticated");
     }
-    setLoading(false);
   }, []);
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  const loadJobs = useCallback(async () => {
+    if (!user) return; 
+    
+    try {
+      let jobList = [];
+      
+      // Admin vê todas as obras, empregador as suas, e trabalhador as suas
+      if (user?.user_type === "admin") {
+        jobList = await Job.list();
+      } else if (user?.user_type === "employer") {
+        jobList = await Job.filter({ employer_id: user.id });
+      } else if (user?.user_type === "worker") {
+        jobList = await Job.filter({ worker_id: user.id });
+      }
+      
+      const jobsWithDates = jobList.filter(job => job.start_date);
+      setJobs(jobsWithDates);
+    } catch (error) {
+      console.error("Error loading jobs:", error);
+    }
+  }, [user]);
 
-  const getMonthDays = () => {
-    const start = startOfMonth(currentMonth);
-    const end = endOfMonth(currentMonth);
-    const days = eachDayOfInterval({ start, end });
-    
-    const firstDayOfWeek = getDay(start);
-    const padding = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
-    const paddingDays = Array(padding).fill(null);
-    
-    return [...paddingDays, ...days];
+  useEffect(() => {
+    loadUser();
+  }, [loadUser]);
+
+  useEffect(() => {
+    loadJobs();
+  }, [loadJobs]);
+
+  const getWeekDays = () => {
+    const start = startOfWeek(currentWeek, { weekStartsOn: 1 });
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      days.push(addDays(start, i));
+    }
+    return days;
   };
 
   const getJobsForDay = (date) => {
-    if (!date) return [];
     return jobs.filter(job => {
       if (!job.start_date) return false;
       try {
@@ -65,183 +83,145 @@ export default function Calendar() {
     });
   };
 
-  const getDayStyle = (date) => {
-    if (!date) return { wrapper: '', text: 'text-transparent' };
-    const dayJobs = getJobsForDay(date);
-    const isToday = isSameDay(date, new Date());
-    const isSelected = isSameDay(date, selectedDate);
-    const hasJobs = dayJobs.length > 0;
-    const hasInProgress = dayJobs.some(j => j.status === 'in_progress');
-    
-    if (isSelected) return { wrapper: 'hexagon bg-[var(--primary)]', text: 'text-gray-900 font-bold' };
-    if (hasInProgress) return { wrapper: 'hexagon bg-[var(--primary)]/30', text: 'text-[var(--primary)] font-bold' };
-    if (hasJobs) return { wrapper: 'hexagon bg-[var(--surface)]', text: 'text-[var(--text-primary)]' };
-    if (isToday) return { wrapper: '', text: 'text-[var(--primary)] font-bold' };
-    return { wrapper: '', text: 'text-[var(--text-secondary)]' };
+  const formatPrice = (price, type) => {
+    if (type === "hourly") {
+      return `€${price}/h`;
+    }
+    return `€${price}`;
   };
 
-  const weekDays = ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'];
-  const selectedDayJobs = getJobsForDay(selectedDate);
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "open": return "bg-blue-500";
+      case "in_progress": return "bg-yellow-500";
+      case "completed": return "bg-green-500";
+      default: return "bg-gray-500";
+    }
+  };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[var(--background)]">
-        <Loader2 className="w-12 h-12 text-[var(--primary)] animate-spin mb-4" />
-        <p className="text-[var(--text-secondary)]">A carregar calendário...</p>
-      </div>
-    );
-  }
+  const weekDays = getWeekDays();
 
   return (
-    <div className="min-h-screen bg-[var(--background)]">
-      {/* Header */}
-      <header className="px-6 pt-8 pb-4 flex justify-between items-center">
-        <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-full bg-[var(--surface)] shadow-sm flex items-center justify-center">
-          <span className="material-icons-round text-[var(--text-secondary)]">menu</span>
-        </button>
-        <h1 className="text-lg font-bold text-[var(--text-primary)]">Work Calendar</h1>
-        <button className="w-10 h-10 rounded-full bg-[var(--surface)] shadow-sm flex items-center justify-center relative">
-          <span className="material-icons-round text-[var(--text-secondary)]">notifications</span>
-          <span className="absolute top-1 right-1 w-2 h-2 bg-[var(--primary)] rounded-full" />
-        </button>
-      </header>
-
-      {/* Month Navigation */}
-      <div className="px-6 mb-6">
+    <div className="h-screen flex flex-col bg-gray-50">
+      {/* Mobile Header */}
+      <div className="bg-white border-b px-4 py-3">
         <div className="flex items-center justify-between">
-          <button 
-            onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-            className="w-10 h-10 rounded-full bg-[var(--surface)] shadow-sm flex items-center justify-center"
-          >
-            <ChevronLeft className="w-5 h-5 text-[var(--text-secondary)]" />
-          </button>
-          
-          <h2 className="text-xl font-bold text-[var(--text-primary)]">
-            {format(currentMonth, "MMMM yyyy", { locale: pt })}
-          </h2>
-          
-          <button 
-            onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-            className="w-10 h-10 rounded-full bg-[var(--surface)] shadow-sm flex items-center justify-center"
-          >
-            <ChevronRight className="w-5 h-5 text-[var(--text-secondary)]" />
-          </button>
+          <h1 className="text-xl font-bold text-gray-900">Calendário</h1>
+          <Button size="icon" variant="outline">
+            <Filter className="w-4 h-4" />
+          </Button>
         </div>
+        
+        {/* Navigation Week */}
+        <div className="flex items-center justify-between mt-3">
+          <Button 
+            size="icon" 
+            variant="outline"
+            onClick={() => setCurrentWeek(subWeeks(currentWeek, 1))}
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          
+          <div className="text-center">
+            <p className="font-semibold text-gray-900">
+              {format(weekDays[0], "d MMM", { locale: pt })} - {format(weekDays[6], "d MMM", { locale: pt })}
+            </p>
+            <p className="text-sm text-gray-500">
+              {format(currentWeek, "yyyy", { locale: pt })}
+            </p>
+          </div>
+          
+          <Button 
+            size="icon" 
+            variant="outline"
+            onClick={() => setCurrentWeek(addWeeks(currentWeek, 1))}
+          >
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Days of Week Header */}
+      <div className="bg-white border-b grid grid-cols-7 text-center py-2 text-xs font-medium text-gray-600">
+        {weekDays.map((day, index) => (
+          <div key={index} className={`py-1 ${isSameDay(day, new Date()) ? 'text-blue-600 font-bold' : ''}`}>
+            <div>{format(day, "EEE", { locale: pt })}</div>
+            <div className={`text-lg ${isSameDay(day, new Date()) ? 'bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center mx-auto' : ''}`}>
+              {format(day, "d")}
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Calendar Grid */}
-      <div className="px-6 mb-6">
-        <div className="bg-[var(--surface)] rounded-2xl shadow-sm p-4">
-          {/* Week Days Header */}
-          <div className="grid grid-cols-7 mb-2">
-            {weekDays.map((day, index) => (
-              <div key={index} className="text-center text-xs font-medium text-[var(--text-muted)] py-2">
-                {day}
-              </div>
-            ))}
-          </div>
-
-          {/* Days Grid */}
-          <div className="grid grid-cols-7 gap-1">
-            {getMonthDays().map((date, index) => {
-              if (!date) return <div key={`empty-${index}`} className="aspect-square" />;
-
-              const dayJobs = getJobsForDay(date);
-              const style = getDayStyle(date);
-              const isCurrentMonth = isSameMonth(date, currentMonth);
-
-              return (
-                <button
-                  key={date.toISOString()}
-                  onClick={() => setSelectedDate(date)}
-                  className={`aspect-square flex flex-col items-center justify-center rounded-lg transition-all ${!isCurrentMonth ? 'opacity-30' : ''}`}
-                >
-                  <div className={`w-10 h-10 flex items-center justify-center ${style.wrapper}`}>
-                    <span className={`text-sm ${style.text}`}>
-                      {format(date, "d")}
-                    </span>
+      <div className="flex-1 overflow-y-auto">
+        <div className="grid grid-cols-7 divide-x">
+          {weekDays.map((day, index) => {
+            const dayJobs = getJobsForDay(day);
+            const isToday = isSameDay(day, new Date());
+            
+            return (
+              <div key={index} className="min-h-24 p-1">
+                {dayJobs.map((job) => (
+                  <div
+                    key={job.id}
+                    className={`mb-1 p-2 rounded text-xs ${getStatusColor(job.status)} text-white`}
+                  >
+                    <div className="font-medium truncate">{job.title}</div>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="truncate">{formatPrice(job.price, job.price_type)}</span>
+                      <span className="text-xs opacity-75">{job.category}</span>
+                    </div>
                   </div>
-                  {dayJobs.length > 0 && !isSameDay(date, selectedDate) && (
-                    <div className="w-1.5 h-1.5 rounded-full bg-[var(--primary)] mt-0.5" />
-                  )}
-                </button>
-              );
-            })}
-          </div>
+                ))}
+                
+                {/* Empty state */}
+                {dayJobs.length === 0 && (
+                  <div className="h-16 flex items-center justify-center">
+                    {user?.user_type === "employer" && (
+                      <Button size="sm" variant="ghost" className="text-xs text-gray-400">
+                        <Plus className="w-3 h-3" />
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* Today's Schedule */}
-      <div className="px-6 pb-24">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold text-[var(--text-primary)]">Today's Schedule</h3>
-          <span className="text-[var(--primary)] text-sm font-medium">
-            {format(selectedDate, "MMM d", { locale: pt })}
-          </span>
-        </div>
-
-        {selectedDayJobs.length > 0 ? (
-          <div className="space-y-4">
-            {selectedDayJobs.map(job => (
-              <div 
-                key={job.id} 
-                className="bg-[var(--surface)] rounded-2xl shadow-sm overflow-hidden"
-              >
-                {job.image_urls?.[0] && (
-                  <div className="relative h-32">
-                    <img src={job.image_urls[0]} alt={job.title} className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                    <div className="absolute bottom-3 left-3 right-3">
-                      <span className={`inline-block px-2 py-1 rounded text-xs font-bold text-white ${
-                        job.status === 'in_progress' ? 'bg-green-500' : 'bg-blue-500'
-                      }`}>
-                        {job.status === 'in_progress' ? 'ON-SITE' : 'PENDING'}
-                      </span>
-                      <h4 className="text-white font-bold mt-1">{job.title}</h4>
-                    </div>
-                    <button className="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-[var(--primary)] flex items-center justify-center shadow-lg">
-                      <ChevronRight className="w-5 h-5 text-gray-900" />
-                    </button>
-                  </div>
-                )}
-
-                <div className="p-4">
-                  {!job.image_urls?.[0] && (
-                    <>
-                      <span className={`inline-block px-2 py-1 rounded text-xs font-bold ${
-                        job.status === 'in_progress' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
-                      }`}>
-                        {job.status === 'in_progress' ? 'ON-SITE' : 'PENDING'}
-                      </span>
-                      <h4 className="font-bold text-[var(--text-primary)] mt-2">{job.title}</h4>
-                    </>
-                  )}
-                  
-                  <div className="flex items-center gap-4 mt-2 text-sm text-[var(--text-secondary)]">
-                    <div className="flex items-center gap-1">
-                      <Clock className="w-4 h-4 text-[var(--primary)]" />
-                      <span>07:00 AM - 03:00 PM</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1 mt-1 text-sm text-[var(--text-secondary)]">
-                    <MapPin className="w-4 h-4 text-[var(--primary)]" />
-                    <span className="truncate">{job.location}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-12 bg-[var(--surface)] rounded-2xl">
-            <div className="w-16 h-18 hexagon bg-[var(--surface-secondary)] flex items-center justify-center mb-4">
-              <span className="material-icons-round text-3xl text-[var(--text-muted)]">event</span>
+      {/* Quick Stats */}
+      <div className="bg-white border-t p-4">
+        <div className="grid grid-cols-4 gap-4 text-center">
+          <div>
+            <div className="text-lg font-bold text-blue-600">
+              {jobs.filter(j => j.status === 'open').length}
             </div>
-            <p className="text-[var(--text-secondary)]">No events scheduled</p>
-            <p className="text-sm text-[var(--text-muted)] mt-1">
-              {format(selectedDate, "MMMM d", { locale: pt })}
-            </p>
+            <div className="text-xs text-gray-600">Abertas</div>
           </div>
-        )}
+          
+          <div>
+            <div className="text-lg font-bold text-yellow-600">
+              {jobs.filter(j => j.status === 'in_progress').length}
+            </div>
+            <div className="text-xs text-gray-600">Em Curso</div>
+          </div>
+          
+          <div>
+            <div className="text-lg font-bold text-green-600">
+              {jobs.filter(j => j.status === 'completed').length}
+            </div>
+            <div className="text-xs text-gray-600">Concluídas</div>
+          </div>
+          
+          <div>
+            <div className="text-lg font-bold text-purple-600">
+              €{jobs.reduce((sum, j) => sum + (j.price || 0), 0).toLocaleString()}
+            </div>
+            <div className="text-xs text-gray-600">Total</div>
+          </div>
+        </div>
       </div>
     </div>
   );
