@@ -163,7 +163,7 @@ export default function Profile() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#1E293B] pb-24">
+    <div className="min-h-screen bg-[#F8FAFC] text-[#1E293B] pb-4">
       <input
         type="file"
         ref={avatarInputRef}
@@ -204,7 +204,7 @@ export default function Profile() {
         </DropdownMenu>
       </header>
 
-      <main className="max-w-md mx-auto px-4 pt-6">
+      <main className="w-full max-w-md mx-auto px-4 pt-6">
         {/* Profile Card */}
         <div className="relative bg-white rounded-2xl shadow-lg border border-gray-100 p-6 flex flex-col items-center mb-8">
           {/* Hexagon Avatar */}
@@ -382,43 +382,7 @@ export default function Profile() {
         </section>
       </main>
 
-      {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 w-full bg-white border-t border-gray-200 pt-2 px-6 pb-6 z-50">
-        <div className="flex justify-between items-center max-w-md mx-auto h-16">
-          <button 
-            onClick={() => navigate(createPageUrl("Dashboard"))}
-            className="flex flex-col items-center justify-center text-[#64748B] hover:text-[#F26522] transition-colors"
-          >
-            <Home className="w-6 h-6" />
-            <span className="text-[10px] mt-1 font-medium">Início</span>
-          </button>
-          <button className="flex flex-col items-center justify-center text-[#64748B] hover:text-[#F26522] transition-colors">
-            <Search className="w-6 h-6" />
-            <span className="text-[10px] mt-1 font-medium">Buscar</span>
-          </button>
-          <div className="relative -top-6">
-            <button 
-              onClick={() => navigate(createPageUrl("NewJob"))}
-              className="w-14 h-14 bg-[#F26522] text-white rounded-xl rotate-45 flex items-center justify-center shadow-lg shadow-[#F26522]/40 transition-transform active:scale-95"
-            >
-              <Plus className="-rotate-45 w-8 h-8" />
-            </button>
-          </div>
-          <button 
-            onClick={() => navigate(createPageUrl("Chat"))}
-            className="flex flex-col items-center justify-center text-[#64748B] hover:text-[#F26522] transition-colors"
-          >
-            <MessageSquare className="w-6 h-6" />
-            <span className="text-[10px] mt-1 font-medium">Chat</span>
-          </button>
-          <button className="flex flex-col items-center justify-center text-[#F26522] transition-colors">
-            <UserIcon className="w-6 h-6" />
-            <span className="text-[10px] mt-1 font-medium">Perfil</span>
-          </button>
-        </div>
-      </nav>
 
-      <div className="h-24"></div>
     </div>
   );
 }
