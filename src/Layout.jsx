@@ -185,13 +185,13 @@ export default function Layout({ children }) {
 
       {/* Main content */}
       <div className="md:pl-64 flex flex-col flex-1">
-        <main className="flex-1 pb-20 md:pb-0">
+        <main className="flex-1 pb-[calc(5rem+env(safe-area-inset-bottom,0px))] md:pb-0">
           {children}
         </main>
       </div>
 
       {/* --- Barra de Navegação Inferior (Mobile) --- */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 md:hidden z-50 px-2 pb-4 pt-2">
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 md:hidden z-50 px-2 pt-2" style={{paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom, 0px))"}}>
         <div className="flex justify-between items-end max-w-sm mx-auto">
           {/* Início */}
           <Link
@@ -222,15 +222,21 @@ export default function Layout({ children }) {
             <span className="text-[10px] mt-1 font-medium">Candidaturas</span>
           </Link>
 
-          {/* Botão Central + (Hexágono) */}
+          {/* Botão Central (Hexágono) */}
           <div className="relative -top-4 flex flex-col items-center w-16">
             <Link
-              to={createPageUrl("NewJob")}
+              to={createPageUrl(user?.user_type === 'employer' || user?.user_type === 'admin' ? "NewJob" : "MyJobs")}
               className="w-14 h-14 bg-[#F26522] text-white flex items-center justify-center shadow-lg shadow-[#F26522]/30"
               style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }}
             >
-              <span className="text-3xl font-light">+</span>
+              {user?.user_type === 'employer' || user?.user_type === 'admin'
+                ? <span className="text-3xl font-light">+</span>
+                : <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="7" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+              }
             </Link>
+            <span className="text-[9px] mt-1 text-gray-400 font-medium">
+              {user?.user_type === 'employer' || user?.user_type === 'admin' ? 'Nova Obra' : 'Trabalhos'}
+            </span>
           </div>
 
           {/* Chat */}
